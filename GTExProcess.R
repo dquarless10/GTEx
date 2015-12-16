@@ -1,4 +1,4 @@
-##2015-12-15ß
+##2015-12-15
 ##parse GTEx results
 ##GTEx_Analysis_V6_eQTLs.tar.gz
 ##head -n100 Whole_Blood_Analysis.snpgenes > Whole_Blood_Analysis.snpgenes.head100
