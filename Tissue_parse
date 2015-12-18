@@ -1,0 +1,73 @@
+##2015-12-18
+##Select Tissue and parse GTEx significant results file
+##GTEx_Analysis_V6_eQTLs.tar.gz
+##To run from command line, make executable first: chmod ug+x [file_name.R]
+##./[file_name.R] --tissue [Tissue] --path [Directory_with_GTEx_Files] 
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages(library("optparse"))
+suppressPackageStartupMessages(library("stats"))
+
+# specify our desired options in a list, by default OptionParser will add an help option
+option_list <- list(
+  make_option(c("-t", "--tissue"), type="character", default="Brain_Hypothalamus",
+              help="The GTEX tissue you are interested in. Please list entire tissue name. [default: %default]"),
+  make_option(c("-v", "--verbose"), action="store_true", default=TRUE,
+ 	help="Print extra output [default]"),
+  make_option(c("-q", "--quietly"), action="store_false",
+ 	dest="verbose", help="Print little output"),
+  make_option(c("-p", "--path"), type="character", default="/Users/dquarles/Documents/SchorkLab/Dan_evans/GTEx_Analysis_V6_eQTLs/",
+              help="Define the path to tissue files. Default path is [default %default]"),
+  make_option(c("-o", "--out"), type="character", default="Tissue Used",
+              help="Define the output file name.  [default:  %default]"),
+  make_option(c("-d", "--dir_out"), type="character", default="Tissue File Location",
+              help="Define the output folder path.  [default:  %default]")
+)
+
+# get command line options, if help option encountered print help and exit,
+# otherwise if options not found on command line then set defaults,
+
+opt <- parse_args(OptionParser(option_list=option_list))
+
+# print some progress messages to stderr if "quietly" wasn't requested
+if ( opt$verbose ) {
+  write("SNP Concerige Service...\n", stderr())
+}
+# do some operations based on user input
+  if ( opt$out == "Tissue Used" ) {
+	opt$out = paste(opt$tissue, ".snpIDs", sep="")	
+}  
+  if ( opt$dir_out == "Tissue File Location" ) {
+        opt$dir_out = opt$path 
+}  
+
+if ( opt$verbose ) {  
+	write(paste("\nPulling down significant eSNPS from ", opt$tissue, " at ", opt$path, "\n", sep=""),  stderr())}
+
+# Get the file name...still a litte spardic where it can pull down more than one file to parse. 
+# Please specify full tissue name i.e. Nucleus_accumbens_basal_ganglia
+filenames <- list.files(path = opt$path, pattern=paste(opt$tissue,"_Analysis.snpgenes",sep=""), full.names=FALSE)
+  
+  if ( opt$verbose ) {
+        write(paste("Filename is ", filenames),  stderr())}
+
+#Main Function
+colvars <- c("snp","beta","p_value","ref","alt", "gene_name", "snp_id_1kg_project_phaseI_v3", "rs_id_dbSNP142_GRCh37p13" )
+file_df <- lapply(filenames, function(temp_file) {
+	new_names <- paste(strsplit(temp_file,"_")[[1]][1],strsplit(temp_file,"_")[[1]][2], colvars, sep="_")
+  temp_file <- read.csv(gzfile(temp_file), header=TRUE, sep="\t")
+	temp_file <- temp_file[,colvars]
+  colnames(temp_file) <- new_names
+  return(temp_file)
+})	
+  
+if ( opt$verbose ) {
+	write(paste("\n\nWriting information to: ",opt$out, sep =""),  stderr())}
+  
+setwd(opt$path)
+write.table(file_df[[1]], paste(opt$dir_out, opt$out, sep="") ,sep = "\t", quote=FALSE, row.names = FALSE )
+#write.table(file_df[[1]][,c(1,7,8)], paste(opt$dir_out, opt$out, sep="") ,sep = "\t", quote=FALSE, row.names = FALSE )
+  
+##Will add further functionality to merge files
+
+cat("\n")
