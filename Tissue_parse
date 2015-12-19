@@ -1,9 +1,9 @@
+#!/usr/bin/env Rscript
 ##2015-12-18
 ##Select Tissue and parse GTEx significant results file
 ##GTEx_Analysis_V6_eQTLs.tar.gz
 ##To run from command line, make executable first: chmod ug+x [file_name.R]
 ##./[file_name.R] --tissue [Tissue] --path [Directory_with_GTEx_Files] 
-#!/usr/bin/env Rscript
 
 suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("stats"))
