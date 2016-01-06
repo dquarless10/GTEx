@@ -1,0 +1,35 @@
+
+###Define Path to plink executable
+plink = "//Users/dquarles/Programs/plink_mac/plink"
+
+#define path the input plink dataset
+INPUT <- "/Users/dquarles/Documents/SchorkLab/Projects/ADNI/ADNI_Genotyep/ADNI_QCed"
+
+runPlink <- function(plink, INPUT) {
+#Remove SNPs with less than 95% genotyping, Minor Allele Frequency less that 1%, and that failed HWE with p < 10e-6
+#Input in this case is a binary plink format set of files. If input is a list of 1000G snps identifies use --include command in PLINK
+
+system(paste(plink, "--noweb --bfile", INPUT, "--hwe 1e-6 --geno .05 --maf 0.01 --make-bed --out FILE_HWE_Geno_Maf01", sep=" "))
+
+#system(paste(plink, "--noweb --bfile FILENAME --include", INPUT, "--hwe 1e-6 --geno .05 --maf 0.01 --make-bed --out FILE_HWE_Geno_Maf01", sep=" "))
+
+#Flag individuals missing more than 5% of genome
+system(paste(plink, "--noweb --bfile FILE_HWE_Geno_Maf01 --missing --out MissCheckQC"))
+
+#Create File with Samples Missing more that 5% of Markers
+system("awk '{if($6 > .05) print $1\"\t\"$2}' MissCheckQC.imiss > Missing_samples")
+
+#Filter Missing Samples
+system(paste(plink, "--noweb --bfile FILE_HWE_Geno_Maf01 --remove Missing_samples --make-bed --out FILE_HWE_Geno_Maf01_Missing"))
+
+#Sex Check
+system(paste(plink, "--noweb --bfile FILE_HWE_Geno_Maf01_Missing --check-sex --out SexCheckQC")) 
+
+#Create File with Samples that have incorrect sex assignments
+system("awk '{if($5 !=\"OK\") print $1\"\t\"$2}' SexCheckQC.sexcheck > WrongSex_samples")
+
+#Filter samples on incorrect sex assignment 
+system(paste(plink, "--noweb --bfile FILE_HWE_Geno_Maf01_Missing --remove WrongSex_samples --make-bed --out FILE_HWE_Geno_Maf01_Missing_Sex"))
+}
+
+runPlink(plink,INPUT)
